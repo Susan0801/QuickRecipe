@@ -8,7 +8,6 @@ import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -44,15 +43,12 @@ fun MainFrame() {
     val navigationItems = listOf(
         NavigationItem("Kitchen", Icons.Filled.Home),
         NavigationItem("Recipe", Icons.Filled.Menu),
-        NavigationItem("", Icons.Filled.Add), // Empty placeholder for the FAB
+        NavigationItem("Create", Icons.Filled.Add),
         NavigationItem("Posts", Icons.Filled.Create),
         NavigationItem("Favorite", Icons.Filled.Favorite)
     )
 
     val currentNavigationIndex = remember { mutableIntStateOf(0) }
-    
-    // State for create recipe dialog
-    var showCreateRecipeDialog by remember { mutableStateOf(false) }
     
     // State to track if we're viewing a recipe detail
     var selectedRecipeId by remember { mutableStateOf<Int?>(null) }
@@ -74,7 +70,7 @@ fun MainFrame() {
     Scaffold(
         topBar = {
             // Only show TopAppBar when not viewing recipe detail and not in Settings
-            if (selectedRecipeId == null && !showSettings && selectedPost == null && !showCreateRecipeDialog) {
+            if (selectedRecipeId == null && !showSettings && selectedPost == null) {
                 QuickRecipeTopAppBar(
                     onSettingsClick = { showSettings = true }
                 )
@@ -82,20 +78,12 @@ fun MainFrame() {
         },
         bottomBar = {
             // Only show bottom navigation when not viewing recipe detail and not in Settings
-            if (selectedRecipeId == null && !showSettings && selectedPost == null && !showCreateRecipeDialog) {
+            if (selectedRecipeId == null && !showSettings && selectedPost == null) {
                 NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
                     navigationItems.forEachIndexed { index, item ->
-                        // Skip the middle item which is just a placeholder
-                        if (index == 2) {
-                            return@forEachIndexed
-                        }
-                        
-                        // Adjust the index for the favorites badge after the middle item
-                        val badgeIndex = if (index > 2) index - 1 else index
-                        
                         NavigationBarItem(
                             icon = {
-                                if (badgeIndex == 3 && FavoritesRepository.getFavoritesCount() > 0) {
+                                if (index == 4 && FavoritesRepository.getFavoritesCount() > 0) {
                                     // Show badge for favorites
                                     BadgedBox(
                                         badge = {
@@ -113,11 +101,11 @@ fun MainFrame() {
                                 }
                             },
                             label = { Text(item.title) },
-                            selected = currentNavigationIndex.value == (if (index > 2) index - 1 else index),
+                            selected = currentNavigationIndex.value == index,
                             onClick = { 
-                                currentNavigationIndex.value = if (index > 2) index - 1 else index
+                                currentNavigationIndex.value = index
                                 // When entering Favorites screen, refresh the favorites count
-                                if (badgeIndex == 3) {
+                                if (index == 4) {
                                     favoritesCount.value = FavoritesRepository.getFavoritesCount()
                                 }
                             }
@@ -125,28 +113,7 @@ fun MainFrame() {
                     }
                 }
             }
-        },
-        floatingActionButton = {
-            // Only show FAB when not viewing recipe detail and not in Settings
-            if (selectedRecipeId == null && !showSettings && selectedPost == null && !showCreateRecipeDialog) {
-                FloatingActionButton(
-                    onClick = { showCreateRecipeDialog = true },
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier
-                        .zIndex(1f)
-                        .size(56.dp)
-                        .clip(CircleShape)
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Add,
-                        contentDescription = "Create Recipe",
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-            }
-        },
-        floatingActionButtonPosition = androidx.compose.material3.FabPosition.Center
+        }
     ) { innerPadding ->
         // If we're viewing settings, show the settings screen
         if (showSettings) {
@@ -155,20 +122,6 @@ fun MainFrame() {
                 onBackPressed = { showSettings = false }
             )
         } 
-        // If we're viewing the create recipe dialog
-        else if (showCreateRecipeDialog) {
-            CreateRecipeScreen(
-                modifier = Modifier.padding(innerPadding),
-                onRecipeCreated = { recipe ->
-                    showCreateRecipeDialog = false
-                    // Navigate to the post screen after creating a recipe
-                    currentNavigationIndex.value = 2 // Post screen index
-                },
-                onBackPressed = {
-                    showCreateRecipeDialog = false
-                }
-            )
-        }
         // If we're viewing a recipe detail, show that screen
         else if (selectedRecipeId != null) {
             RecipeDetailScreen(
@@ -222,6 +175,20 @@ fun MainFrame() {
                     )
                 }
                 2 -> {
+                    // Create Recipe Screen
+                    CreateRecipeScreen(
+                        modifier = Modifier.padding(innerPadding),
+                        onRecipeCreated = { recipe ->
+                            // Navigate to the post screen after creating a recipe
+                            currentNavigationIndex.value = 3 // Post screen index
+                        },
+                        onBackPressed = {
+                            // Go back to recipe list when cancelled
+                            currentNavigationIndex.value = 1
+                        }
+                    )
+                }
+                3 -> {
                     // Posts Screen
                     PostScreen(
                         modifier = Modifier.padding(innerPadding),
@@ -233,7 +200,7 @@ fun MainFrame() {
                         }
                     )
                 }
-                3 -> {
+                4 -> {
                     // Favorites Screen
                     FavoritesScreen(
                         modifier = Modifier.padding(innerPadding),
