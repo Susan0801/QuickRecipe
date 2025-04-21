@@ -3,10 +3,12 @@ package com.example.quickrecipe.ui.screens
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Create
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -21,12 +23,19 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.zIndex
 import com.example.quickrecipe.data.entity.NavigationItem
 import com.example.quickrecipe.data.repository.FavoritesRepository
+import com.example.quickrecipe.model.Post
 import com.example.quickrecipe.model.Recipe
 import com.example.quickrecipe.ui.components.QuickRecipeTopAppBar
 
@@ -35,51 +44,58 @@ fun MainFrame() {
     val navigationItems = listOf(
         NavigationItem("Kitchen", Icons.Filled.Home),
         NavigationItem("Recipe", Icons.Filled.Menu),
-        NavigationItem("Favorite", Icons.Filled.Favorite),
-        NavigationItem("Settings", Icons.Filled.Settings)
+        NavigationItem("", Icons.Filled.Add), // Empty placeholder for the FAB
+        NavigationItem("Posts", Icons.Filled.Create),
+        NavigationItem("Favorite", Icons.Filled.Favorite)
     )
 
     val currentNavigationIndex = remember { mutableIntStateOf(0) }
     
+    // State for create recipe dialog
+    var showCreateRecipeDialog by remember { mutableStateOf(false) }
+    
     // State to track if we're viewing a recipe detail
     var selectedRecipeId by remember { mutableStateOf<Int?>(null) }
     
+    // State to track if we're viewing a post detail
+    var selectedPost by remember { mutableStateOf<Post?>(null) }
+    
     // Track favorites count for badge
     val favoritesCount = remember { mutableStateOf(FavoritesRepository.getFavoritesCount()) }
+    
+    // State to track if we're viewing settings
+    var showSettings by remember { mutableStateOf(false) }
     
     // Update favorites count whenever it changes
     LaunchedEffect(Unit) {
         favoritesCount.value = FavoritesRepository.getFavoritesCount()
     }
-    
-    // List of available cuisines
-    val cuisines = listOf("All", "Italian", "Mexican", "Chinese", "Indian", "Thai")
-    // Track selected cuisine
-    val selectedCuisine = remember { mutableStateOf("All") }
 
     Scaffold(
         topBar = {
-            // Only show TopAppBar when not on Recipes screen, Favorites screen, 
-            // Settings screen, and not viewing recipe detail
-            if (currentNavigationIndex.value != 1 && 
-                currentNavigationIndex.value != 2 && 
-                currentNavigationIndex.value != 3 && 
-                selectedRecipeId == null) {
+            // Only show TopAppBar when not viewing recipe detail and not in Settings
+            if (selectedRecipeId == null && !showSettings && selectedPost == null && !showCreateRecipeDialog) {
                 QuickRecipeTopAppBar(
-                    cuisines = cuisines,
-                    selectedCuisine = selectedCuisine.value,
-                    onCuisineSelected = { selectedCuisine.value = it }
+                    onSettingsClick = { showSettings = true }
                 )
             }
         },
         bottomBar = {
-            // Only show bottom navigation when not viewing recipe detail
-            if (selectedRecipeId == null) {
+            // Only show bottom navigation when not viewing recipe detail and not in Settings
+            if (selectedRecipeId == null && !showSettings && selectedPost == null && !showCreateRecipeDialog) {
                 NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
                     navigationItems.forEachIndexed { index, item ->
+                        // Skip the middle item which is just a placeholder
+                        if (index == 2) {
+                            return@forEachIndexed
+                        }
+                        
+                        // Adjust the index for the favorites badge after the middle item
+                        val badgeIndex = if (index > 2) index - 1 else index
+                        
                         NavigationBarItem(
                             icon = {
-                                if (index == 2 && FavoritesRepository.getFavoritesCount() > 0) {
+                                if (badgeIndex == 3 && FavoritesRepository.getFavoritesCount() > 0) {
                                     // Show badge for favorites
                                     BadgedBox(
                                         badge = {
@@ -97,11 +113,11 @@ fun MainFrame() {
                                 }
                             },
                             label = { Text(item.title) },
-                            selected = currentNavigationIndex.value == index,
+                            selected = currentNavigationIndex.value == (if (index > 2) index - 1 else index),
                             onClick = { 
-                                currentNavigationIndex.value = index
+                                currentNavigationIndex.value = if (index > 2) index - 1 else index
                                 // When entering Favorites screen, refresh the favorites count
-                                if (index == 2) {
+                                if (badgeIndex == 3) {
                                     favoritesCount.value = FavoritesRepository.getFavoritesCount()
                                 }
                             }
@@ -109,10 +125,52 @@ fun MainFrame() {
                     }
                 }
             }
-        }
+        },
+        floatingActionButton = {
+            // Only show FAB when not viewing recipe detail and not in Settings
+            if (selectedRecipeId == null && !showSettings && selectedPost == null && !showCreateRecipeDialog) {
+                FloatingActionButton(
+                    onClick = { showCreateRecipeDialog = true },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier
+                        .zIndex(1f)
+                        .size(56.dp)
+                        .clip(CircleShape)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Add,
+                        contentDescription = "Create Recipe",
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            }
+        },
+        floatingActionButtonPosition = androidx.compose.material3.FabPosition.Center
     ) { innerPadding ->
-        // If we're viewing a recipe detail, show that instead of the main screens
-        if (selectedRecipeId != null) {
+        // If we're viewing settings, show the settings screen
+        if (showSettings) {
+            SettingsScreen(
+                modifier = Modifier.padding(innerPadding),
+                onBackPressed = { showSettings = false }
+            )
+        } 
+        // If we're viewing the create recipe dialog
+        else if (showCreateRecipeDialog) {
+            CreateRecipeScreen(
+                modifier = Modifier.padding(innerPadding),
+                onRecipeCreated = { recipe ->
+                    showCreateRecipeDialog = false
+                    // Navigate to the post screen after creating a recipe
+                    currentNavigationIndex.value = 2 // Post screen index
+                },
+                onBackPressed = {
+                    showCreateRecipeDialog = false
+                }
+            )
+        }
+        // If we're viewing a recipe detail, show that screen
+        else if (selectedRecipeId != null) {
             RecipeDetailScreen(
                 recipeId = selectedRecipeId!!,
                 onBackPressed = { 
@@ -121,16 +179,38 @@ fun MainFrame() {
                     favoritesCount.value = FavoritesRepository.getFavoritesCount()
                 }
             )
-        } else {
+        }
+        // If we're viewing a post detail, show that screen
+        else if (selectedPost != null) {
+            // This would be the post detail screen (future implementation)
+            // For now, we'll just set it back to null to return to the posts list
+            selectedPost = null
+        }
+        else {
             // Otherwise show the main navigation screens
             when (currentNavigationIndex.value) {
                 0 -> {
                     // Kitchen Screen
-                    Text(
-                        text = "Kitchen Screen",
-                        fontSize = 24.sp,
-                        modifier = Modifier.padding(innerPadding).padding(16.dp)
-                    )
+                    var showRecipeResults by remember { mutableStateOf(false) }
+                    var selectedIngredients by remember { mutableStateOf(listOf<String>()) }
+
+                    if (showRecipeResults) {
+                        FindRecipeResultListScreen(
+                            ingredients = selectedIngredients,
+                            onBackPressed = { showRecipeResults = false },
+                            onRecipeClick = { recipe ->
+                                selectedRecipeId = recipe.id
+                            }
+                        )
+                    } else {
+                        KitchenScreen(
+                            modifier = Modifier.padding(innerPadding),
+                            onFindRecipes = { ingredients ->
+                                selectedIngredients = ingredients
+                                showRecipeResults = true
+                            }
+                        )
+                    }
                 }
                 1 -> {
                     // Recipes Screen
@@ -142,6 +222,18 @@ fun MainFrame() {
                     )
                 }
                 2 -> {
+                    // Posts Screen
+                    PostScreen(
+                        modifier = Modifier.padding(innerPadding),
+                        onRecipeClick = { recipe ->
+                            selectedRecipeId = recipe.id
+                        },
+                        onPostClick = { post ->
+                            selectedPost = post
+                        }
+                    )
+                }
+                3 -> {
                     // Favorites Screen
                     FavoritesScreen(
                         modifier = Modifier.padding(innerPadding),
@@ -152,12 +244,6 @@ fun MainFrame() {
                             // Navigate to Recipes tab when "Discover Recipes" is clicked
                             currentNavigationIndex.value = 1
                         }
-                    )
-                }
-                3 -> {
-                    // Settings Screen
-                    SettingsScreen(
-                        modifier = Modifier.padding(innerPadding)
                     )
                 }
             }

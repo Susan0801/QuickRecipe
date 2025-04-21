@@ -6,6 +6,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,9 +17,7 @@ import androidx.compose.ui.unit.dp
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QuickRecipeTopAppBar(
-    cuisines: List<String>,
-    selectedCuisine: String,
-    onCuisineSelected: (String) -> Unit
+    onSettingsClick: () -> Unit
 ) {
     CenterAlignedTopAppBar(
         title = { Text("QuickRecipe") },
@@ -28,33 +27,8 @@ fun QuickRecipeTopAppBar(
             }
         },
         navigationIcon = {
-            var expanded by remember { mutableStateOf(false) }
-            
-            Box {
-                Row(
-                    modifier = Modifier
-                        .clickable { expanded = !expanded }
-                        .padding(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(selectedCuisine)
-                    Icon(Icons.Filled.ArrowDropDown, contentDescription = "Select cuisine")
-                }
-                
-                DropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }
-                ) {
-                    cuisines.forEach { cuisine ->
-                        DropdownMenuItem(
-                            text = { Text(cuisine) },
-                            onClick = {
-                                onCuisineSelected(cuisine)
-                                expanded = false
-                            }
-                        )
-                    }
-                }
+            IconButton(onClick = onSettingsClick) {
+                Icon(Icons.Filled.Settings, contentDescription = "Settings")
             }
         }
     )
@@ -63,11 +37,7 @@ fun QuickRecipeTopAppBar(
 @Preview(showBackground = true)
 @Composable
 fun TopAppBarPreview() {
-    var selected by remember { mutableStateOf("Italian") }
-
     QuickRecipeTopAppBar(
-        cuisines = listOf("Italian", "Mexican", "Chinese", "Indian", "Thai"),
-        selectedCuisine = selected,
-        onCuisineSelected = { selected = it }
+        onSettingsClick = {}
     )
 }

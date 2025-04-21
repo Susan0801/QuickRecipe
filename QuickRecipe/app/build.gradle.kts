@@ -61,4 +61,5 @@ dependencies {
     // Debug tools
     debugImplementation("androidx.compose.ui:ui-tooling:1.5.4")
     debugImplementation("androidx.compose.ui:ui-test-manifest:1.5.4")
+      implementation("androidx.compose.material:material-icons-extended:1.5.4")
 }

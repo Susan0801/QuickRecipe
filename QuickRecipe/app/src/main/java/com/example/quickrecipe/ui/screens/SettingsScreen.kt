@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,8 +22,12 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.quickrecipe.ui.theme.rememberThemeState
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(modifier: Modifier = Modifier) {
+fun SettingsScreen(
+    modifier: Modifier = Modifier,
+    onBackPressed: () -> Unit = {}
+) {
     val (isDarkMode, onThemeChanged) = rememberThemeState()
 
     var notificationsEnabled by remember { mutableStateOf(true) }
@@ -40,96 +45,107 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(16.dp)
         ) {
-            Text(
-                text = "Settings",
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                color = colors.onBackground,
-                modifier = Modifier.padding(bottom = 24.dp)
-            )
-
-            Text(
-                text = "Preferences",
-                fontSize = 16.sp,
-                color = colors.outline,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
-
-            // Language
-            SettingsItem(
-                iconText = "🌐",
-                title = "Language",
-                endContent = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(text = selectedLanguage, color = colors.outline)
+            // Top App Bar with back button
+            TopAppBar(
+                title = { Text("Settings") },
+                navigationIcon = {
+                    IconButton(onClick = onBackPressed) {
                         Icon(
-                            imageVector = Icons.Default.KeyboardArrowRight,
-                            contentDescription = "Select language",
-                            tint = colors.outline
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Back"
                         )
                     }
                 },
-                onClick = { showLanguageDialog = true }
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = colors.background
+                )
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Text(
+                    text = "Preferences",
+                    fontSize = 16.sp,
+                    color = colors.outline,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
 
-            // Dark Mode
-            SettingsItem(
-                iconText = "🌙",
-                title = "Dark Mode",
-                endContent = {
-                    Switch(
-                        checked = isDarkMode,
-                        onCheckedChange = { onThemeChanged(it) },
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = colors.onPrimary,
-                            checkedTrackColor = colors.primary,
-                            uncheckedThumbColor = colors.onSurface,
-                            uncheckedTrackColor = colors.surfaceVariant
+                // Language
+                SettingsItem(
+                    iconText = "🌐",
+                    title = "Language",
+                    endContent = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(text = selectedLanguage, color = colors.outline)
+                            Icon(
+                                imageVector = Icons.Default.KeyboardArrowRight,
+                                contentDescription = "Select language",
+                                tint = colors.outline
+                            )
+                        }
+                    },
+                    onClick = { showLanguageDialog = true }
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Dark Mode
+                SettingsItem(
+                    iconText = "🌙",
+                    title = "Dark Mode",
+                    endContent = {
+                        Switch(
+                            checked = isDarkMode,
+                            onCheckedChange = { onThemeChanged(it) },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = colors.onPrimary,
+                                checkedTrackColor = colors.primary,
+                                uncheckedThumbColor = colors.onSurface,
+                                uncheckedTrackColor = colors.surfaceVariant
+                            )
                         )
-                    )
-                }
-            )
+                    }
+                )
 
-            Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-            // Notifications
-            SettingsItem(
-                iconText = "🔔",
-                title = "Notifications",
-                endContent = {
-                    Switch(
-                        checked = notificationsEnabled,
-                        onCheckedChange = { notificationsEnabled = it },
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = colors.onPrimary,
-                            checkedTrackColor = colors.primary,
-                            uncheckedThumbColor = colors.onSurface,
-                            uncheckedTrackColor = colors.surfaceVariant
+                // Notifications
+                SettingsItem(
+                    iconText = "🔔",
+                    title = "Notifications",
+                    endContent = {
+                        Switch(
+                            checked = notificationsEnabled,
+                            onCheckedChange = { notificationsEnabled = it },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = colors.onPrimary,
+                                checkedTrackColor = colors.primary,
+                                uncheckedThumbColor = colors.onSurface,
+                                uncheckedTrackColor = colors.surfaceVariant
+                            )
                         )
-                    )
-                }
-            )
+                    }
+                )
 
-            Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
-            Text(
-                text = "About",
-                fontSize = 16.sp,
-                color = colors.outline,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
+                Text(
+                    text = "About",
+                    fontSize = 16.sp,
+                    color = colors.outline,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
 
-            SettingsItem(
-                iconText = "🍕",
-                title = "Share App",
-                onClick = {
-                    // TODO: Share intent logic
-                }
-            )
+                SettingsItem(
+                    iconText = "🍕",
+                    title = "Share App",
+                    onClick = {
+                        // TODO: Share intent logic
+                    }
+                )
+            }
         }
     }
 

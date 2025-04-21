@@ -7,7 +7,12 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.FilterAlt
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,48 +31,225 @@ import coil.compose.AsyncImage
 import com.example.quickrecipe.R
 import com.example.quickrecipe.model.MockRecipe
 import com.example.quickrecipe.model.Recipe
+import com.example.quickrecipe.model.Difficulty
 
+data class TimeFilter(val minutes: Int, val label: String)
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RecipesScreen(
     modifier: Modifier = Modifier,
     onRecipeClick: (Recipe) -> Unit = {}
 ) {
-    // State for selected cuisine filter
-    var selectedCuisine by remember { mutableStateOf("All") }
+    var searchQuery by remember { mutableStateOf("") }
+    var selectedCuisine by remember { mutableStateOf<String?>(null) }
+    var selectedDifficulty by remember { mutableStateOf<Difficulty?>(null) }
+    var selectedTimeFilter by remember { mutableStateOf<TimeFilter?>(null) }
+    var isFiltersVisible by remember { mutableStateOf(false) }
     
-    // Get recipes based on selected cuisine - use safe call to handle errors
+    val cuisines = listOf("Mediterranean", "Asian", "Italian", "Mexican", "Indian", "Breakfast")
+    val difficulties = listOf(Difficulty.EASY, Difficulty.MEDIUM, Difficulty.HARD)
+    val timeFilters = listOf(
+        TimeFilter(15, "Under 15 min"),
+        TimeFilter(30, "Under 30 min"),
+        TimeFilter(60, "Under 1 hour")
+    )
+
+    // Calculate active filters count
+    val activeFiltersCount = listOf(
+        selectedCuisine,
+        selectedDifficulty,
+        selectedTimeFilter
+    ).count { it != null }
+    
+    // Filter recipes based on all criteria
     val recipes = try {
-        MockRecipe.getRecipesByCuisine(selectedCuisine)
+        MockRecipe.getAllRecipes().filter { recipe ->
+            val matchesCuisine = selectedCuisine == null || recipe.cuisineType == selectedCuisine
+            val matchesDifficulty = selectedDifficulty == null || recipe.difficulty == selectedDifficulty
+            val matchesTime = selectedTimeFilter?.let { timeFilter ->
+                (recipe.cookingTime + recipe.prepTime) <= timeFilter.minutes
+            } ?: true
+            val matchesSearch = searchQuery.isEmpty() || 
+                recipe.title.contains(searchQuery, ignoreCase = true) ||
+                recipe.ingredients.any { it.contains(searchQuery, ignoreCase = true) }
+            
+            matchesCuisine && matchesDifficulty && matchesTime && matchesSearch
+        }
     } catch (e: Exception) {
         emptyList()
     }
-    
-    // Update cuisines to match what's in the mock data
-    val cuisines = listOf("All", "Italian", "Mexican", "Chinese", "Indian", "Thai")
 
     Column(
         modifier = modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        // Header
         Text(
             text = "Discover Recipes",
-            fontSize = 28.sp,
+            fontSize = 25.sp,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(vertical = 16.dp)
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier.padding(bottom = 16.dp)
         )
-        
-        // Cuisine filter chips
-        CuisineFilterChips(
-            cuisines = cuisines,
-            selectedCuisine = selectedCuisine,
-            onCuisineSelected = { selectedCuisine = it }
-        )
-        
+
+        // Search Bar and Filter Icon Row
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                modifier = Modifier.weight(1f),
+                placeholder = { Text("Search recipes...") },
+                leadingIcon = { Icon(Icons.Default.Search, "Search") },
+                trailingIcon = if (searchQuery.isNotEmpty()) {
+                    {
+                        IconButton(onClick = { searchQuery = "" }) {
+                            Icon(Icons.Default.Clear, "Clear search")
+                        }
+                    }
+                } else null,
+                singleLine = true,
+                shape = RoundedCornerShape(28.dp)
+            )
+
+            // Filter Icon with Badge
+            Box(contentAlignment = Alignment.TopEnd) {
+                IconButton(
+                    onClick = { isFiltersVisible = !isFiltersVisible },
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(RoundedCornerShape(28.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                ) {
+                    Icon(
+                        Icons.Default.FilterAlt,
+                        contentDescription = "Filter",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                if (activeFiltersCount > 0) {
+                    Box(
+                        modifier = Modifier
+                            .size(20.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primary)
+                            .padding(4.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = activeFiltersCount.toString(),
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            fontSize = 12.sp
+                        )
+                    }
+                }
+            }
+        }
+
         Spacer(modifier = Modifier.height(16.dp))
-        
-        // Recipe list
+
+        // Filters Section - Only visible when isFiltersVisible is true
+        if (isFiltersVisible) {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Filters",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    if (activeFiltersCount > 0) {
+                        TextButton(
+                            onClick = {
+                                selectedCuisine = null
+                                selectedDifficulty = null
+                                selectedTimeFilter = null
+                            }
+                        ) {
+                            Text("Clear all")
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Cuisine Filters
+                Text(
+                    text = "Cuisine",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(cuisines) { cuisine ->
+                        FilterChip(
+                            selected = selectedCuisine == cuisine,
+                            onClick = { 
+                                selectedCuisine = if (selectedCuisine == cuisine) null else cuisine
+                            },
+                            label = { Text(cuisine) },
+                            modifier = Modifier.height(32.dp)
+                        )
+                    }
+                }
+
+                // Difficulty Filters
+                Text(
+                    text = "Difficulty",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(difficulties) { difficulty ->
+                        FilterChip(
+                            selected = selectedDifficulty == difficulty,
+                            onClick = { 
+                                selectedDifficulty = if (selectedDifficulty == difficulty) null else difficulty
+                            },
+                            label = { Text(difficulty.name.lowercase().capitalize()) },
+                            modifier = Modifier.height(32.dp)
+                        )
+                    }
+                }
+
+                // Time Filters
+                Text(
+                    text = "Time",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(timeFilters) { timeFilter ->
+                        FilterChip(
+                            selected = selectedTimeFilter == timeFilter,
+                            onClick = { 
+                                selectedTimeFilter = if (selectedTimeFilter == timeFilter) null else timeFilter
+                            },
+                            label = { Text(timeFilter.label) },
+                            modifier = Modifier.height(32.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+        }
+
+        // Recipe List
         RecipeList(
             recipes = recipes,
             onRecipeClick = onRecipeClick
