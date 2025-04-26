@@ -37,17 +37,10 @@ import com.example.quickrecipe.data.repository.FavoritesRepository
 import com.example.quickrecipe.model.Post
 import com.example.quickrecipe.model.Recipe
 import com.example.quickrecipe.ui.components.QuickRecipeTopAppBar
+import com.example.quickrecipe.ui.components.QuickRecipeBottomNavBar
 
 @Composable
 fun MainFrame() {
-    val navigationItems = listOf(
-        NavigationItem("Kitchen", Icons.Filled.Home),
-        NavigationItem("Recipe", Icons.Filled.Menu),
-        NavigationItem("Create", Icons.Filled.Add),
-        NavigationItem("Posts", Icons.Filled.Create),
-        NavigationItem("Favorite", Icons.Filled.Favorite)
-    )
-
     val currentNavigationIndex = remember { mutableIntStateOf(0) }
     
     // State to track if we're viewing a recipe detail
@@ -79,39 +72,16 @@ fun MainFrame() {
         bottomBar = {
             // Only show bottom navigation when not viewing recipe detail and not in Settings
             if (selectedRecipeId == null && !showSettings && selectedPost == null) {
-                NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
-                    navigationItems.forEachIndexed { index, item ->
-                        NavigationBarItem(
-                            icon = {
-                                if (index == 4 && FavoritesRepository.getFavoritesCount() > 0) {
-                                    // Show badge for favorites
-                                    BadgedBox(
-                                        badge = {
-                                            if (FavoritesRepository.getFavoritesCount() > 0) {
-                                                Badge {
-                                                    Text(FavoritesRepository.getFavoritesCount().toString())
-                                                }
-                                            }
-                                        }
-                                    ) {
-                                        Icon(item.icon, contentDescription = item.title)
-                                    }
-                                } else {
-                                    Icon(item.icon, contentDescription = item.title)
-                                }
-                            },
-                            label = { Text(item.title) },
-                            selected = currentNavigationIndex.value == index,
-                            onClick = { 
-                                currentNavigationIndex.value = index
-                                // When entering Favorites screen, refresh the favorites count
-                                if (index == 4) {
-                                    favoritesCount.value = FavoritesRepository.getFavoritesCount()
-                                }
-                            }
-                        )
+                QuickRecipeBottomNavBar(
+                    currentIndex = currentNavigationIndex.intValue,
+                    onTabSelected = { index -> 
+                        currentNavigationIndex.intValue = index
+                        // When entering Favorites screen, refresh the favorites count
+                        if (index == 4) {
+                            favoritesCount.value = FavoritesRepository.getFavoritesCount()
+                        }
                     }
-                }
+                )
             }
         }
     ) { innerPadding ->
@@ -141,7 +111,7 @@ fun MainFrame() {
         }
         else {
             // Otherwise show the main navigation screens
-            when (currentNavigationIndex.value) {
+            when (currentNavigationIndex.intValue) {
                 0 -> {
                     // Kitchen Screen
                     var showRecipeResults by remember { mutableStateOf(false) }
@@ -180,11 +150,11 @@ fun MainFrame() {
                         modifier = Modifier.padding(innerPadding),
                         onRecipeCreated = { recipe ->
                             // Navigate to the post screen after creating a recipe
-                            currentNavigationIndex.value = 3 // Post screen index
+                            currentNavigationIndex.intValue = 3 // Post screen index
                         },
                         onBackPressed = {
                             // Go back to recipe list when cancelled
-                            currentNavigationIndex.value = 1
+                            currentNavigationIndex.intValue = 1
                         }
                     )
                 }
@@ -209,7 +179,7 @@ fun MainFrame() {
                         },
                         onDiscoverRecipesClick = {
                             // Navigate to Recipes tab when "Discover Recipes" is clicked
-                            currentNavigationIndex.value = 1
+                            currentNavigationIndex.intValue = 1
                         }
                     )
                 }
