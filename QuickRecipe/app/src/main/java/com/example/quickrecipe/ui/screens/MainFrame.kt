@@ -32,8 +32,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.zIndex
+import androidx.compose.ui.platform.LocalContext
 import com.example.quickrecipe.data.entity.NavigationItem
 import com.example.quickrecipe.data.repository.FavoritesRepository
+import com.example.quickrecipe.data.repository.UserRepository
 import com.example.quickrecipe.model.Post
 import com.example.quickrecipe.model.Recipe
 import com.example.quickrecipe.ui.components.QuickRecipeTopAppBar
@@ -55,6 +57,23 @@ fun MainFrame() {
     // State to track if we're viewing settings
     var showSettings by remember { mutableStateOf(false) }
     
+    // State to track if we're viewing login screen
+    var showLoginScreen by remember { mutableStateOf(false) }
+    
+    // State to track if we're viewing register screen
+    var showRegisterScreen by remember { mutableStateOf(false) }
+    
+    // Get current user
+    val currentUser by UserRepository.currentUser
+    
+    // Get context for saving user data
+    val context = LocalContext.current
+    
+    // Initialize UserRepository
+    LaunchedEffect(Unit) {
+        UserRepository.initialize(context)
+    }
+    
     // Update favorites count whenever it changes
     LaunchedEffect(Unit) {
         favoritesCount.value = FavoritesRepository.getFavoritesCount()
@@ -62,16 +81,27 @@ fun MainFrame() {
 
     Scaffold(
         topBar = {
-            // Only show TopAppBar when not viewing recipe detail and not in Settings
-            if (selectedRecipeId == null && !showSettings && selectedPost == null) {
+            // Only show TopAppBar when not viewing detail screens, settings, login, or register
+            if (selectedRecipeId == null && !showSettings && selectedPost == null && 
+                !showLoginScreen && !showRegisterScreen) {
                 QuickRecipeTopAppBar(
-                    onSettingsClick = { showSettings = true }
+                    onSettingsClick = { showSettings = true },
+                    onProfileClick = { 
+                        if (currentUser == null) {
+                            showLoginScreen = true
+                        } else {
+                            // TODO: Show profile screen
+                            // For now, just show login screen again to handle logout
+                            showLoginScreen = true
+                        }
+                    }
                 )
             }
         },
         bottomBar = {
-            // Only show bottom navigation when not viewing recipe detail and not in Settings
-            if (selectedRecipeId == null && !showSettings && selectedPost == null) {
+            // Only show bottom navigation when not viewing detail screens, settings, login, or register
+            if (selectedRecipeId == null && !showSettings && selectedPost == null && 
+                !showLoginScreen && !showRegisterScreen) {
                 QuickRecipeBottomNavBar(
                     currentIndex = currentNavigationIndex.intValue,
                     onTabSelected = { index -> 
@@ -85,8 +115,40 @@ fun MainFrame() {
             }
         }
     ) { innerPadding ->
+        // If we're viewing the register screen
+        if (showRegisterScreen) {
+            RegisterScreen(
+                modifier = Modifier.padding(innerPadding),
+                onBackPressed = { showRegisterScreen = false },
+                onRegisterSuccess = {
+                    // Save user login data
+                    currentUser?.let { user ->
+                        UserRepository.saveUserLogin(context, user)
+                    }
+                    showRegisterScreen = false
+                }
+            )
+        }
+        // If we're viewing the login screen
+        else if (showLoginScreen) {
+            LoginScreen(
+                modifier = Modifier.padding(innerPadding),
+                onBackPressed = { showLoginScreen = false },
+                onLoginSuccess = { 
+                    // Save user login data
+                    currentUser?.let { user ->
+                        UserRepository.saveUserLogin(context, user)
+                    }
+                    showLoginScreen = false 
+                },
+                onRegisterClick = {
+                    showLoginScreen = false
+                    showRegisterScreen = true
+                }
+            )
+        }
         // If we're viewing settings, show the settings screen
-        if (showSettings) {
+        else if (showSettings) {
             SettingsScreen(
                 modifier = Modifier.padding(innerPadding),
                 onBackPressed = { showSettings = false }

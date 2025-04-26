@@ -9,17 +9,20 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.example.quickrecipe.data.repository.UserRepository
 import com.example.quickrecipe.ui.theme.rememberThemeState
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -33,6 +36,11 @@ fun SettingsScreen(
     var notificationsEnabled by remember { mutableStateOf(true) }
     var selectedLanguage by remember { mutableStateOf("English") }
     var showLanguageDialog by remember { mutableStateOf(false) }
+    var showLogoutConfirmation by remember { mutableStateOf(false) }
+    
+    // Get current user state
+    val currentUser by UserRepository.currentUser
+    val context = LocalContext.current
 
     val colors = MaterialTheme.colorScheme
 
@@ -145,6 +153,40 @@ fun SettingsScreen(
                         // TODO: Share intent logic
                     }
                 )
+                
+                // Only show account section if user is logged in
+                if (currentUser != null) {
+                    Spacer(modifier = Modifier.height(24.dp))
+                    
+                    Text(
+                        text = "Account",
+                        fontSize = 16.sp,
+                        color = colors.outline,
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    )
+                    
+                    // User info
+                    SettingsItem(
+                        iconText = "👤",
+                        title = "Logged in as ${currentUser?.name}"
+                    )
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    // Logout button
+                    SettingsItem(
+                        iconText = "🚪",
+                        title = "Logout",
+                        endContent = {
+                            Icon(
+                                imageVector = Icons.Default.Logout,
+                                contentDescription = "Logout",
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        },
+                        onClick = { showLogoutConfirmation = true }
+                    )
+                }
             }
         }
     }
@@ -157,6 +199,35 @@ fun SettingsScreen(
                 showLanguageDialog = false
             },
             onDismiss = { showLanguageDialog = false }
+        )
+    }
+    
+    // Logout confirmation dialog
+    if (showLogoutConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showLogoutConfirmation = false },
+            title = { Text("Logout") },
+            text = { Text("Are you sure you want to logout?") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        // Perform logout
+                        UserRepository.logout(context)
+                        showLogoutConfirmation = false
+                        onBackPressed() // Go back after logout
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Logout")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutConfirmation = false }) {
+                    Text("Cancel")
+                }
+            }
         )
     }
 }

@@ -13,17 +13,38 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.quickrecipe.data.repository.UserRepository
+import androidx.compose.ui.text.style.TextOverflow
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QuickRecipeTopAppBar(
-    onSettingsClick: () -> Unit
+    onSettingsClick: () -> Unit,
+    onProfileClick: () -> Unit
 ) {
+    val currentUser by UserRepository.currentUser
+    
     CenterAlignedTopAppBar(
         title = { Text("QuickRecipe") },
         actions = {
-            IconButton(onClick = { /* TODO: Profile action */ }) {
-                Icon(Icons.Filled.Person, contentDescription = "Profile")
+            IconButton(onClick = onProfileClick) {
+                if (currentUser != null) {
+                    // Display a badge with the first letter of user's name
+                    BadgedBox(
+                        badge = {
+                            Badge {
+                                Text(
+                                    text = "•",
+                                    color = MaterialTheme.colorScheme.onPrimary
+                                )
+                            }
+                        }
+                    ) {
+                        Icon(Icons.Filled.Person, contentDescription = "Profile")
+                    }
+                } else {
+                    Icon(Icons.Filled.Person, contentDescription = "Login")
+                }
             }
         },
         navigationIcon = {
@@ -38,6 +59,7 @@ fun QuickRecipeTopAppBar(
 @Composable
 fun TopAppBarPreview() {
     QuickRecipeTopAppBar(
-        onSettingsClick = {}
+        onSettingsClick = {},
+        onProfileClick = {}
     )
 }
