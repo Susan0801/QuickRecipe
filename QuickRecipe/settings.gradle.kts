@@ -10,11 +10,7 @@ pluginManagement {
         mavenCentral()
         gradlePluginPortal()
     }
-    plugins {
-        id("com.google.gms.google-services") version "4.4.2"   // <-- keep here
-    }
 }
-
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
@@ -25,3 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "QuickRecipe"
 include(":app")
+ 
