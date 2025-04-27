@@ -349,6 +349,67 @@ fun CreateRecipeScreen(
                 }
             }
             
+            Spacer(modifier = Modifier.height(24.dp))
+            
+            // Finish Button
+            Button(
+                onClick = {
+                    if (validateRecipe(title, prepTime, cookingTime, ingredients, instructions)) {
+                        val prepTimeInt = prepTime.toIntOrNull() ?: 0
+                        val cookingTimeInt = cookingTime.toIntOrNull() ?: 0
+                        
+                        val newRecipe = Recipe(
+                            id = 0, // Will be assigned by repository
+                            title = title,
+                            ingredients = ingredients.split(",").map { it.trim() },
+                            instructions = instructions.split("\n").map { it.trim() },
+                            cuisineType = cuisineType,
+                            prepTime = prepTimeInt,
+                            cookingTime = cookingTimeInt,
+                            difficulty = difficulty,
+                            dietaryPrefs = emptyList(), // Could add later
+                            imageUrl = null // Could add photo upload later
+                        )
+                        
+                        if (createPost) {
+                            val postTitleToUse = if (postTitle.isBlank()) "I made: $title" else postTitle
+                            
+                            // Create post with the new recipe using the current user info
+                            PostRepository.createPostWithNewRecipe(
+                                userId = currentUser.id,
+                                username = currentUser.name,
+                                title = postTitleToUse,
+                                description = description.ifBlank { "I created a new $cuisineType recipe!" },
+                                imageUrl = null, // Could add photo upload later
+                                recipe = newRecipe
+                            )
+                        }
+                        
+                        onRecipeCreated(newRecipe)
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                ),
+                enabled = validateRecipe(title, prepTime, cookingTime, ingredients, instructions)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Check,
+                    contentDescription = "Finish",
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    "Finish Recipe",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            
             Spacer(modifier = Modifier.height(100.dp)) // Extra space at the bottom
         }
     }
