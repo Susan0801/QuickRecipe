@@ -58,8 +58,10 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation("io.coil-kt:coil-compose:2.4.0")
     implementation("androidx.compose.material3:material3:1.2.1")
+    // Window size classes for adaptive layouts
+    implementation("androidx.compose.material3:material3-window-size-class:1.2.1")
     // Debug tools
     debugImplementation("androidx.compose.ui:ui-tooling:1.5.4")
     debugImplementation("androidx.compose.ui:ui-test-manifest:1.5.4")
-      implementation("androidx.compose.material:material-icons-extended:1.5.4")
+    implementation("androidx.compose.material:material-icons-extended:1.5.4")
 }

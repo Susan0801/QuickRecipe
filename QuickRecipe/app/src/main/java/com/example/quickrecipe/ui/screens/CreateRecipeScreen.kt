@@ -28,9 +28,11 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.quickrecipe.data.repository.PostRepository
+import com.example.quickrecipe.data.repository.UserRepository
 import com.example.quickrecipe.model.Difficulty
 import com.example.quickrecipe.model.MockRecipe
 import com.example.quickrecipe.model.Recipe
+import com.example.quickrecipe.model.User
 import java.util.Date
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -38,7 +40,8 @@ import java.util.Date
 fun CreateRecipeScreen(
     modifier: Modifier = Modifier,
     onRecipeCreated: (Recipe) -> Unit,
-    onBackPressed: () -> Unit
+    onBackPressed: () -> Unit,
+    currentUser: User = UserRepository.currentUser.value!!
 ) {
     // Recipe fields
     var title by remember { mutableStateOf("") }
@@ -98,10 +101,10 @@ fun CreateRecipeScreen(
                                 if (createPost) {
                                     val postTitleToUse = if (postTitle.isBlank()) "I made: $title" else postTitle
                                     
-                                    // Create post with the new recipe
+                                    // Create post with the new recipe using the current user info
                                     PostRepository.createPostWithNewRecipe(
-                                        userId = "current_user", // Replace with actual user ID in real app
-                                        username = "Current User", // Replace with actual username
+                                        userId = currentUser.id,
+                                        username = currentUser.name,
                                         title = postTitleToUse,
                                         description = description.ifBlank { "I created a new $cuisineType recipe!" },
                                         imageUrl = null, // Could add photo upload later

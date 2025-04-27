@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "231408322065",
+    "project_id": "quickrecipe-de7e3",
+    "storage_bucket": "quickrecipe-de7e3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:231408322065:android:835ddaba89b1865f3f53b0",
+        "android_client_info": {
+          "package_name": "com.example.quickrecipe"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAX-kFy1vxgIxhvBbWlDnzZ3od2cd1TLKQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

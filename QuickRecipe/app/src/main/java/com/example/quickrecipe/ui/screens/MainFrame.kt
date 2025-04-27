@@ -63,6 +63,9 @@ fun MainFrame() {
     // State to track if we're viewing register screen
     var showRegisterScreen by remember { mutableStateOf(false) }
     
+    // Track where the user is coming from when logging in
+    var loginNavigationSource by remember { mutableStateOf(0) }
+    
     // Get current user
     val currentUser by UserRepository.currentUser
     
@@ -133,7 +136,14 @@ fun MainFrame() {
         else if (showLoginScreen) {
             LoginScreen(
                 modifier = Modifier.padding(innerPadding),
-                onBackPressed = { showLoginScreen = false },
+                onBackPressed = { 
+                    showLoginScreen = false
+                    // Return to the source tab if needed
+                    if (loginNavigationSource == 2) { // Came from create recipe
+                        currentNavigationIndex.intValue = 1 // Go to recipes tab
+                    }
+                    // For other sources, just stay where they were
+                },
                 onLoginSuccess = { 
                     // Save user login data
                     currentUser?.let { user ->
@@ -208,27 +218,40 @@ fun MainFrame() {
                 }
                 2 -> {
                     // Create Recipe Screen
-                    CreateRecipeScreen(
-                        modifier = Modifier.padding(innerPadding),
-                        onRecipeCreated = { recipe ->
-                            // Navigate to the post screen after creating a recipe
-                            currentNavigationIndex.intValue = 3 // Post screen index
-                        },
-                        onBackPressed = {
-                            // Go back to recipe list when cancelled
-                            currentNavigationIndex.intValue = 1
-                        }
-                    )
+                    if (currentUser == null) {
+                        // Record where we're coming from and show login
+                        loginNavigationSource = 2 // Create Recipe tab
+                        showLoginScreen = true
+                    } else {
+                        CreateRecipeScreen(
+                            modifier = Modifier.padding(innerPadding),
+                            onRecipeCreated = { recipe ->
+                                // Navigate to the post screen after creating a recipe
+                                currentNavigationIndex.intValue = 3 // Post screen index
+                            },
+                            onBackPressed = {
+                                // Go back to recipe list when cancelled
+                                currentNavigationIndex.intValue = 1
+                            },
+                            currentUser = currentUser!!
+                        )
+                    }
                 }
                 3 -> {
                     // Posts Screen
                     PostScreen(
                         modifier = Modifier.padding(innerPadding),
+                        currentUser = currentUser,
                         onRecipeClick = { recipe ->
                             selectedRecipeId = recipe.id
                         },
                         onPostClick = { post ->
                             selectedPost = post
+                        },
+                        onLoginRequired = {
+                            // Record where we're coming from and show login
+                            loginNavigationSource = 3 // Posts tab
+                            showLoginScreen = true
                         }
                     )
                 }

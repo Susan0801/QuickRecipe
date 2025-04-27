@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.InsertPhoto
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.InsertComment
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -35,6 +36,7 @@ import coil.compose.AsyncImage
 import com.example.quickrecipe.data.repository.PostRepository
 import com.example.quickrecipe.model.Post
 import com.example.quickrecipe.model.Recipe
+import com.example.quickrecipe.model.User
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.Date
@@ -42,13 +44,18 @@ import java.util.Date
 @Composable
 fun PostScreen(
     modifier: Modifier = Modifier,
+    currentUser: User? = null,
     onRecipeClick: (Recipe) -> Unit = {},
-    onPostClick: (Post) -> Unit = {}
+    onPostClick: (Post) -> Unit = {},
+    onLoginRequired: () -> Unit = {}
 ) {
     val posts = remember { PostRepository.getAllPosts() }
     
     // State for the create post dialog
     var showCreatePostDialog by remember { mutableStateOf(false) }
+    
+    // State to store if a login message was shown
+    var loginMessageShown by remember { mutableStateOf(false) }
     
     Box(modifier = modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -63,6 +70,41 @@ fun PostScreen(
                     .fillMaxWidth()
                     .wrapContentSize(Alignment.Center)
             )
+            
+            // Message when trying to create post without login
+            if (loginMessageShown) {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "Login required to create posts",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        
+                        IconButton(
+                            onClick = { loginMessageShown = false }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Dismiss",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                }
+            }
             
             // Posts list
             LazyColumn(
@@ -90,7 +132,16 @@ fun PostScreen(
         
         // Floating action button for creating new posts
         FloatingActionButton(
-            onClick = { showCreatePostDialog = true },
+            onClick = { 
+                if (currentUser == null) {
+                    // Show login message
+                    loginMessageShown = true
+                    // Redirect to login if not logged in
+                    onLoginRequired()
+                } else {
+                    showCreatePostDialog = true
+                }
+            },
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(16.dp),
@@ -111,7 +162,8 @@ fun PostScreen(
             onPostCreated = { 
                 showCreatePostDialog = false
                 // Refresh posts here if needed
-            }
+            },
+            currentUser = currentUser
         )
     }
 }
@@ -343,7 +395,8 @@ fun PostItem(
 @Composable
 fun CreatePostDialog(
     onDismiss: () -> Unit,
-    onPostCreated: () -> Unit
+    onPostCreated: () -> Unit,
+    currentUser: User?
 ) {
     var title by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
@@ -442,13 +495,23 @@ fun CreatePostDialog(
                     
                     Button(
                         onClick = {
-                            // Create post logic here, then:
-                            if (isCreatingRecipe) {
-                                // Navigate to recipe creation with this post info
+                            // Create post using the current user information
+                            currentUser?.let { user ->
+                                PostRepository.createPost(
+                                    userId = user.id,
+                                    username = user.name,
+                                    title = title,
+                                    description = description,
+                                    imageUrl = null // Could add photo upload later
+                                )
+                                
+                                if (isCreatingRecipe) {
+                                    // Navigate to recipe creation with this post info
+                                }
+                                onPostCreated()
                             }
-                            onPostCreated()
                         },
-                        enabled = title.isNotBlank() && description.isNotBlank()
+                        enabled = title.isNotBlank() && description.isNotBlank() && currentUser != null
                     ) {
                         Text("Post")
                     }

@@ -129,4 +129,29 @@ object PostRepository {
         mockPosts.add(post)
         return post
     }
+    
+    fun createPost(
+        userId: String,
+        username: String,
+        title: String,
+        description: String,
+        imageUrl: String?
+    ): Post {
+        // Create a post without a recipe
+        val post = Post(
+            id = postIdCounter.getAndIncrement(),
+            userId = userId,
+            username = username,
+            title = title,
+            description = description,
+            imageUrl = imageUrl,
+            timestamp = Date(),
+            recipeId = null,
+            isNewRecipe = false,
+            tags = emptyList()
+        )
+        
+        mockPosts.add(post)
+        return post
+    }
 } 
