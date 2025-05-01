@@ -63,6 +63,9 @@ fun MainFrame() {
     // State to track if we're viewing register screen
     var showRegisterScreen by remember { mutableStateOf(false) }
     
+    // State to track if we're viewing profile screen
+    var showProfileScreen by remember { mutableStateOf(false) }
+    
     // Track where the user is coming from when logging in
     var loginNavigationSource by remember { mutableStateOf(0) }
     
@@ -86,16 +89,14 @@ fun MainFrame() {
         topBar = {
             // Only show TopAppBar when not viewing detail screens, settings, login, or register
             if (selectedRecipeId == null && !showSettings && selectedPost == null && 
-                !showLoginScreen && !showRegisterScreen) {
+                !showLoginScreen && !showRegisterScreen && !showProfileScreen) {
                 QuickRecipeTopAppBar(
                     onSettingsClick = { showSettings = true },
                     onProfileClick = { 
                         if (currentUser == null) {
                             showLoginScreen = true
                         } else {
-                            // TODO: Show profile screen
-                            // For now, just show login screen again to handle logout
-                            showLoginScreen = true
+                            showProfileScreen = true
                         }
                     }
                 )
@@ -112,6 +113,10 @@ fun MainFrame() {
                         // When entering Favorites screen, refresh the favorites count
                         if (index == 4) {
                             favoritesCount.value = FavoritesRepository.getFavoritesCount()
+                        }
+                        // Close profile screen when navigating to other tabs
+                        if (showProfileScreen) {
+                            showProfileScreen = false
                         }
                     }
                 )
@@ -154,6 +159,23 @@ fun MainFrame() {
                 onRegisterClick = {
                     showLoginScreen = false
                     showRegisterScreen = true
+                }
+            )
+        }
+        // If we're viewing the profile screen
+        else if (showProfileScreen && currentUser != null) {
+            ProfileScreen(
+                currentUser = currentUser!!,
+                modifier = Modifier.padding(innerPadding),
+                onBackPressed = { showProfileScreen = false },
+                onLogout = {
+                    showProfileScreen = false
+                    showLoginScreen = true
+                },
+                currentNavigationIndex = currentNavigationIndex.intValue,
+                onNavigate = { index ->
+                    currentNavigationIndex.intValue = index
+                    showProfileScreen = false
                 }
             )
         }
