@@ -6,27 +6,12 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.Badge
-import androidx.compose.material3.BadgedBox
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
@@ -40,10 +25,15 @@ import com.example.quickrecipe.model.Post
 import com.example.quickrecipe.model.Recipe
 import com.example.quickrecipe.ui.components.QuickRecipeTopAppBar
 import com.example.quickrecipe.ui.components.QuickRecipeBottomNavBar
+import com.example.quickrecipe.ui.util.WindowSize
+import com.example.quickrecipe.ui.util.rememberWindowSize
+import com.example.quickrecipe.ui.util.getResponsivePadding
 
 @Composable
 fun MainFrame() {
     val currentNavigationIndex = remember { mutableIntStateOf(0) }
+    val windowSize = rememberWindowSize()
+    val padding = getResponsivePadding(windowSize)
     
     // State to track if we're viewing a recipe detail
     var selectedRecipeId by remember { mutableStateOf<Int?>(null) }
@@ -86,8 +76,8 @@ fun MainFrame() {
     }
 
     Scaffold(
+        modifier = Modifier.fillMaxSize(),
         topBar = {
-            // Only show TopAppBar when not viewing detail screens, settings, login, or register
             if (selectedRecipeId == null && !showSettings && selectedPost == null && 
                 !showLoginScreen && !showRegisterScreen && !showProfileScreen) {
                 QuickRecipeTopAppBar(
@@ -103,18 +93,15 @@ fun MainFrame() {
             }
         },
         bottomBar = {
-            // Only show bottom navigation when not viewing detail screens, settings, login, or register
             if (selectedRecipeId == null && !showSettings && selectedPost == null && 
                 !showLoginScreen && !showRegisterScreen) {
                 QuickRecipeBottomNavBar(
                     currentIndex = currentNavigationIndex.intValue,
                     onTabSelected = { index -> 
                         currentNavigationIndex.intValue = index
-                        // When entering Favorites screen, refresh the favorites count
                         if (index == 4) {
                             favoritesCount.value = FavoritesRepository.getFavoritesCount()
                         }
-                        // Close profile screen when navigating to other tabs
                         if (showProfileScreen) {
                             showProfileScreen = false
                         }
@@ -123,172 +110,164 @@ fun MainFrame() {
             }
         }
     ) { innerPadding ->
-        // If we're viewing the register screen
-        if (showRegisterScreen) {
-            RegisterScreen(
-                modifier = Modifier.padding(innerPadding),
-                onBackPressed = { showRegisterScreen = false },
-                onRegisterSuccess = {
-                    // Save user login data
-                    currentUser?.let { user ->
-                        UserRepository.saveUserLogin(context, user)
-                    }
-                    showRegisterScreen = false
-                }
-            )
-        }
-        // If we're viewing the login screen
-        else if (showLoginScreen) {
-            LoginScreen(
-                modifier = Modifier.padding(innerPadding),
-                onBackPressed = { 
-                    showLoginScreen = false
-                    // Return to the source tab if needed
-                    if (loginNavigationSource == 2) { // Came from create recipe
-                        currentNavigationIndex.intValue = 1 // Go to recipes tab
-                    }
-                    // For other sources, just stay where they were
-                },
-                onLoginSuccess = { 
-                    // Save user login data
-                    currentUser?.let { user ->
-                        UserRepository.saveUserLogin(context, user)
-                    }
-                    showLoginScreen = false 
-                },
-                onRegisterClick = {
-                    showLoginScreen = false
-                    showRegisterScreen = true
-                }
-            )
-        }
-        // If we're viewing the profile screen
-        else if (showProfileScreen && currentUser != null) {
-            ProfileScreen(
-                currentUser = currentUser!!,
-                modifier = Modifier.padding(innerPadding),
-                onBackPressed = { showProfileScreen = false },
-                onLogout = {
-                    showProfileScreen = false
-                    showLoginScreen = true
-                },
-                currentNavigationIndex = currentNavigationIndex.intValue,
-                onNavigate = { index ->
-                    currentNavigationIndex.intValue = index
-                    showProfileScreen = false
-                }
-            )
-        }
-        // If we're viewing settings, show the settings screen
-        else if (showSettings) {
-            SettingsScreen(
-                modifier = Modifier.padding(innerPadding),
-                onBackPressed = { showSettings = false }
-            )
-        } 
-        // If we're viewing a recipe detail, show that screen
-        else if (selectedRecipeId != null) {
-            RecipeDetailScreen(
-                recipeId = selectedRecipeId!!,
-                onBackPressed = { 
-                    selectedRecipeId = null 
-                    // Update favorites count when returning from detail screen
-                    favoritesCount.value = FavoritesRepository.getFavoritesCount()
-                }
-            )
-        }
-        // If we're viewing a post detail, show that screen
-        else if (selectedPost != null) {
-            // This would be the post detail screen (future implementation)
-            // For now, we'll just set it back to null to return to the posts list
-            selectedPost = null
-        }
-        else {
-            // Otherwise show the main navigation screens
-            when (currentNavigationIndex.intValue) {
-                0 -> {
-                    // Kitchen Screen
-                    var showRecipeResults by remember { mutableStateOf(false) }
-                    var selectedIngredients by remember { mutableStateOf(listOf<String>()) }
-
-                    if (showRecipeResults) {
-                        FindRecipeResultListScreen(
-                            ingredients = selectedIngredients,
-                            onBackPressed = { showRecipeResults = false },
-                            onRecipeClick = { recipe ->
-                                selectedRecipeId = recipe.id
-                            }
-                        )
-                    } else {
-                        KitchenScreen(
-                            modifier = Modifier.padding(innerPadding),
-                            onFindRecipes = { ingredients ->
-                                selectedIngredients = ingredients
-                                showRecipeResults = true
-                            }
-                        )
-                    }
-                }
-                1 -> {
-                    // Recipes Screen
-                    RecipesScreen(
-                        modifier = Modifier.padding(innerPadding),
-                        onRecipeClick = { recipe ->
-                            selectedRecipeId = recipe.id
+        Box(
+            modifier = Modifier
+                .padding(innerPadding)
+                .fillMaxSize()
+        ) {
+            // If we're viewing the register screen
+            if (showRegisterScreen) {
+                RegisterScreen(
+                    modifier = Modifier.fillMaxSize(),
+                    onBackPressed = { showRegisterScreen = false },
+                    onRegisterSuccess = {
+                        currentUser?.let { user ->
+                            UserRepository.saveUserLogin(context, user)
                         }
-                    )
-                }
-                2 -> {
-                    // Create Recipe Screen
-                    if (currentUser == null) {
-                        // Record where we're coming from and show login
-                        loginNavigationSource = 2 // Create Recipe tab
-                        showLoginScreen = true
-                    } else {
-                        CreateRecipeScreen(
-                            modifier = Modifier.padding(innerPadding),
-                            onRecipeCreated = { recipe ->
-                                // Navigate to the post screen after creating a recipe
-                                currentNavigationIndex.intValue = 3 // Post screen index
-                            },
-                            onBackPressed = {
-                                // Go back to recipe list when cancelled
-                                currentNavigationIndex.intValue = 1
-                            },
-                            currentUser = currentUser!!
-                        )
+                        showRegisterScreen = false
                     }
-                }
-                3 -> {
-                    // Posts Screen
-                    PostScreen(
-                        modifier = Modifier.padding(innerPadding),
-                        currentUser = currentUser,
-                        onRecipeClick = { recipe ->
-                            selectedRecipeId = recipe.id
-                        },
-                        onPostClick = { post ->
-                            selectedPost = post
-                        },
-                        onLoginRequired = {
-                            // Record where we're coming from and show login
-                            loginNavigationSource = 3 // Posts tab
-                            showLoginScreen = true
-                        }
-                    )
-                }
-                4 -> {
-                    // Favorites Screen
-                    FavoritesScreen(
-                        modifier = Modifier.padding(innerPadding),
-                        onRecipeClick = { recipe ->
-                            selectedRecipeId = recipe.id
-                        },
-                        onDiscoverRecipesClick = {
-                            // Navigate to Recipes tab when "Discover Recipes" is clicked
+                )
+            }
+            // If we're viewing the login screen
+            else if (showLoginScreen) {
+                LoginScreen(
+                    modifier = Modifier.fillMaxSize(),
+                    onBackPressed = { 
+                        showLoginScreen = false
+                        if (loginNavigationSource == 2) {
                             currentNavigationIndex.intValue = 1
                         }
-                    )
+                    },
+                    onLoginSuccess = { 
+                        currentUser?.let { user ->
+                            UserRepository.saveUserLogin(context, user)
+                        }
+                        showLoginScreen = false 
+                    },
+                    onRegisterClick = {
+                        showLoginScreen = false
+                        showRegisterScreen = true
+                    }
+                )
+            }
+            // If we're viewing the profile screen
+            else if (showProfileScreen && currentUser != null) {
+                ProfileScreen(
+                    currentUser = currentUser!!,
+                    modifier = Modifier.fillMaxSize(),
+                    onBackPressed = { showProfileScreen = false },
+                    onLogout = {
+                        showProfileScreen = false
+                        showLoginScreen = true
+                    },
+                    currentNavigationIndex = currentNavigationIndex.intValue,
+                    onNavigate = { index ->
+                        currentNavigationIndex.intValue = index
+                        showProfileScreen = false
+                    }
+                )
+            }
+            // If we're viewing settings
+            else if (showSettings) {
+                SettingsScreen(
+                    modifier = Modifier.fillMaxSize(),
+                    onBackPressed = { showSettings = false }
+                )
+            }
+            // If we're viewing a recipe detail
+            else if (selectedRecipeId != null) {
+                RecipeDetailScreen(
+                    recipeId = selectedRecipeId!!,
+                    onBackPressed = { 
+                        selectedRecipeId = null 
+                        favoritesCount.value = FavoritesRepository.getFavoritesCount()
+                    }
+                )
+            }
+            // Otherwise show the main navigation screens
+            else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = padding)
+                ) {
+                    when (currentNavigationIndex.intValue) {
+                        0 -> {
+                            // Kitchen Screen
+                            var showRecipeResults by remember { mutableStateOf(false) }
+                            var selectedIngredients by remember { mutableStateOf(listOf<String>()) }
+
+                            if (showRecipeResults) {
+                                FindRecipeResultListScreen(
+                                    ingredients = selectedIngredients,
+                                    onBackPressed = { showRecipeResults = false },
+                                    onRecipeClick = { recipe ->
+                                        selectedRecipeId = recipe.id
+                                    }
+                                )
+                            } else {
+                                KitchenScreen(
+                                    modifier = Modifier.fillMaxSize(),
+                                    onFindRecipes = { ingredients ->
+                                        selectedIngredients = ingredients
+                                        showRecipeResults = true
+                                    }
+                                )
+                            }
+                        }
+                        1 -> {
+                            RecipesScreen(
+                                modifier = Modifier.fillMaxSize(),
+                                onRecipeClick = { recipe ->
+                                    selectedRecipeId = recipe.id
+                                }
+                            )
+                        }
+                        2 -> {
+                            if (currentUser == null) {
+                                loginNavigationSource = 2
+                                showLoginScreen = true
+                            } else {
+                                CreateRecipeScreen(
+                                    modifier = Modifier.fillMaxSize(),
+                                    onRecipeCreated = { recipe ->
+                                        currentNavigationIndex.intValue = 3
+                                    },
+                                    onBackPressed = {
+                                        currentNavigationIndex.intValue = 1
+                                    },
+                                    currentUser = currentUser!!
+                                )
+                            }
+                        }
+                        3 -> {
+                            PostScreen(
+                                modifier = Modifier.fillMaxSize(),
+                                currentUser = currentUser,
+                                onRecipeClick = { recipe ->
+                                    selectedRecipeId = recipe.id
+                                },
+                                onPostClick = { post ->
+                                    selectedPost = post
+                                },
+                                onLoginRequired = {
+                                    loginNavigationSource = 3
+                                    showLoginScreen = true
+                                }
+                            )
+                        }
+                        4 -> {
+                            FavoritesScreen(
+                                modifier = Modifier.fillMaxSize(),
+                                onRecipeClick = { recipe ->
+                                    selectedRecipeId = recipe.id
+                                },
+                                onDiscoverRecipesClick = {
+                                    currentNavigationIndex.intValue = 1
+                                }
+                            )
+                        }
+                    }
                 }
             }
         }

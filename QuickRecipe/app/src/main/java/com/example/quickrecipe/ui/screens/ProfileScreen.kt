@@ -11,9 +11,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.quickrecipe.model.User
 import com.example.quickrecipe.data.repository.UserRepository
 import com.example.quickrecipe.ui.components.QuickRecipeBottomNavBar
+import com.example.quickrecipe.ui.util.WindowSize
+import com.example.quickrecipe.ui.util.rememberWindowSize
+import com.example.quickrecipe.ui.util.getResponsivePadding
+import com.example.quickrecipe.ui.util.getResponsiveFontSize
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -27,6 +32,8 @@ fun ProfileScreen(
 ) {
     var showLogoutDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    val windowSize = rememberWindowSize()
+    val padding = getResponsivePadding(windowSize)
 
     Scaffold(
         topBar = {
@@ -52,61 +59,57 @@ fun ProfileScreen(
                 }
             )
         }
-    ) { padding ->
-        Column(
+    ) { innerPadding ->
+        Box(
             modifier = modifier
-                .padding(padding)
-                .padding(16.dp)
-                .fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(innerPadding)
+                .fillMaxSize()
         ) {
-            // Profile Information
-            Text(
-                text = currentUser.name,
-                style = MaterialTheme.typography.headlineMedium
-            )
-            
-            Text(
-                text = currentUser.email,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            if (currentUser.bio != null) {
-                Text(
-                    text = currentUser.bio,
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
-            }
-
-            // Stats
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
+            Column(
+                modifier = Modifier
+                    .padding(padding)
+                    .fillMaxWidth()
+                    .align(if (windowSize == WindowSize.COMPACT) Alignment.TopCenter else Alignment.Center),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(padding)
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = "${currentUser.recipesCreated ?: 0}",
-                        style = MaterialTheme.typography.titleLarge
+                // Profile Information
+                Text(
+                    text = currentUser.name,
+                    style = MaterialTheme.typography.headlineMedium.copy(
+                        fontSize = getResponsiveFontSize(windowSize, 24).sp
                     )
-                    Text("Recipes")
+                )
+                
+                Text(
+                    text = currentUser.email,
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontSize = getResponsiveFontSize(windowSize, 16).sp
+                    ),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                if (currentUser.bio != null) {
+                    Text(
+                        text = currentUser.bio,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontSize = getResponsiveFontSize(windowSize, 14).sp
+                        ),
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(top = padding / 2)
+                    )
                 }
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = "${currentUser.followersCount ?: 0}",
-                        style = MaterialTheme.typography.titleLarge
-                    )
-                    Text("Followers")
-                }
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = "${currentUser.followingCount ?: 0}",
-                        style = MaterialTheme.typography.titleLarge
-                    )
-                    Text("Following")
+
+                // Stats
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = padding),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    StatColumn("Recipes", currentUser.recipesCreated ?: 0, windowSize)
+                    StatColumn("Followers", currentUser.followersCount ?: 0, windowSize)
+                    StatColumn("Following", currentUser.followingCount ?: 0, windowSize)
                 }
             }
         }
@@ -115,8 +118,22 @@ fun ProfileScreen(
     if (showLogoutDialog) {
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
-            title = { Text("Logout") },
-            text = { Text("Are you sure you want to logout?") },
+            title = { 
+                Text(
+                    "Logout",
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        fontSize = getResponsiveFontSize(windowSize, 20).sp
+                    )
+                ) 
+            },
+            text = { 
+                Text(
+                    "Are you sure you want to logout?",
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontSize = getResponsiveFontSize(windowSize, 16).sp
+                    )
+                ) 
+            },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -125,14 +142,50 @@ fun ProfileScreen(
                         onLogout()
                     }
                 ) {
-                    Text("Logout")
+                    Text(
+                        "Logout",
+                        style = MaterialTheme.typography.labelLarge.copy(
+                            fontSize = getResponsiveFontSize(windowSize, 14).sp
+                        )
+                    )
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showLogoutDialog = false }) {
-                    Text("Cancel")
+                    Text(
+                        "Cancel",
+                        style = MaterialTheme.typography.labelLarge.copy(
+                            fontSize = getResponsiveFontSize(windowSize, 14).sp
+                        )
+                    )
                 }
             }
+        )
+    }
+}
+
+@Composable
+private fun StatColumn(
+    label: String,
+    value: Int,
+    windowSize: WindowSize,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = value.toString(),
+            style = MaterialTheme.typography.titleLarge.copy(
+                fontSize = getResponsiveFontSize(windowSize, 20).sp
+            )
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium.copy(
+                fontSize = getResponsiveFontSize(windowSize, 14).sp
+            )
         )
     }
 } 
