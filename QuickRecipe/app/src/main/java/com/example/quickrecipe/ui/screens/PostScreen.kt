@@ -40,6 +40,9 @@ import com.example.quickrecipe.model.User
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.Date
+import com.example.quickrecipe.ui.components.CreatePostDialog
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.snapshots.SnapshotStateList
 
 @Composable
 fun PostScreen(
@@ -49,7 +52,7 @@ fun PostScreen(
     onPostClick: (Post) -> Unit = {},
     onLoginRequired: () -> Unit = {}
 ) {
-    val posts = remember { PostRepository.getAllPosts() }
+    val posts = PostRepository.getAllPosts()
     
     // State for the create post dialog
     var showCreatePostDialog by remember { mutableStateOf(false) }
@@ -385,136 +388,6 @@ fun PostItem(
                         text = "${post.comments} Comments",
                         fontSize = 12.sp
                     )
-                }
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun CreatePostDialog(
-    onDismiss: () -> Unit,
-    onPostCreated: () -> Unit,
-    currentUser: User?
-) {
-    var title by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
-    var isCreatingRecipe by remember { mutableStateOf(false) }
-    
-    Dialog(onDismissRequest = onDismiss) {
-        Surface(
-            shape = RoundedCornerShape(16.dp),
-            color = MaterialTheme.colorScheme.surface
-        ) {
-            Column(
-                modifier = Modifier
-                    .padding(24.dp)
-                    .fillMaxWidth()
-            ) {
-                Text(
-                    text = "Create New Post",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                OutlinedTextField(
-                    value = title,
-                    onValueChange = { title = it },
-                    label = { Text("Title") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                OutlinedTextField(
-                    value = description,
-                    onValueChange = { description = it },
-                    label = { Text("Description") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(100.dp),
-                    maxLines = 5
-                )
-                
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                // Photo button
-                OutlinedButton(
-                    onClick = { /* Add photo logic */ },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.InsertPhoto,
-                        contentDescription = "Add photo"
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Add Photo")
-                }
-                
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                // Recipe toggle
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Create a new recipe with this post",
-                        modifier = Modifier.weight(1f)
-                    )
-                    Switch(
-                        checked = isCreatingRecipe,
-                        onCheckedChange = { isCreatingRecipe = it }
-                    )
-                }
-                
-                if (isCreatingRecipe) {
-                    Text(
-                        text = "You'll be able to add recipe details in the next step",
-                        fontSize = 12.sp,
-                        fontStyle = FontStyle.Italic,
-                        color = MaterialTheme.colorScheme.outline
-                    )
-                }
-                
-                Spacer(modifier = Modifier.height(24.dp))
-                
-                // Buttons
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    TextButton(onClick = onDismiss) {
-                        Text("Cancel")
-                    }
-                    
-                    Spacer(modifier = Modifier.width(8.dp))
-                    
-                    Button(
-                        onClick = {
-                            // Create post using the current user information
-                            currentUser?.let { user ->
-                                PostRepository.createPost(
-                                    userId = user.id,
-                                    username = user.name,
-                                    title = title,
-                                    description = description,
-                                    imageUrl = null // Could add photo upload later
-                                )
-                                
-                                if (isCreatingRecipe) {
-                                    // Navigate to recipe creation with this post info
-                                }
-                                onPostCreated()
-                            }
-                        },
-                        enabled = title.isNotBlank() && description.isNotBlank() && currentUser != null
-                    ) {
-                        Text("Post")
-                    }
                 }
             }
         }

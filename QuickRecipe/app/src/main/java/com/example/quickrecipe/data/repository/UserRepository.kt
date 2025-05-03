@@ -272,4 +272,13 @@ object UserRepository {
     fun isEmailRegistered(email: String): Boolean {
         return userCredentials.containsKey(email)
     }
+    
+    fun addCreatedRecipe(recipeId: Int) {
+        currentUser.value = currentUser.value?.let { user ->
+            user.copy(
+                createdRecipeIds = user.createdRecipeIds + recipeId,
+                recipesCreated = (user.recipesCreated ?: 0) + 1
+            )
+        }
+    }
 }

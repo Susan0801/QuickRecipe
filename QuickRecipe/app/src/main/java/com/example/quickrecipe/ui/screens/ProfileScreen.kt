@@ -20,6 +20,7 @@ import com.example.quickrecipe.ui.util.WindowSize
 import com.example.quickrecipe.ui.util.rememberWindowSize
 import com.example.quickrecipe.ui.util.getResponsivePadding
 import com.example.quickrecipe.ui.util.getResponsiveFontSize
+import com.example.quickrecipe.model.MockRecipe
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -107,6 +108,28 @@ fun ProfileScreen(
                     StatColumn("Recipes", currentUser.recipesCreated ?: 0, windowSize)
                     StatColumn("Followers", currentUser.followersCount ?: 0, windowSize)
                     StatColumn("Following", currentUser.followingCount ?: 0, windowSize)
+                }
+
+                // List of user's created recipes
+                if (currentUser.createdRecipeIds.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(padding))
+                    Text(
+                        text = "Your Recipes:",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.align(Alignment.Start)
+                    )
+                    val userRecipes = currentUser.createdRecipeIds.mapNotNull { MockRecipe.getRecipeById(it) }
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        userRecipes.forEach { recipe ->
+                            Text(
+                                text = recipe.title,
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                        }
+                    }
                 }
             }
         }

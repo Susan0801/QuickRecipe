@@ -2,25 +2,61 @@
 
 QuickRecipe is a modern Android application that helps users discover, browse, and save their favorite recipes. Built with Jetpack Compose, it provides a smooth and intuitive user experience for cooking enthusiasts.
 
-## Features
+## Key Features & Insights
 
-- **Recipe Discovery**: Browse through various recipes with beautiful card-based UI
-- **Cuisine Filtering**: Filter recipes by cuisine types (Italian, Mexican, Chinese, Indian, Thai)
-- **Recipe Details**: View detailed information about each recipe including ingredients and instructions
-- **Favorites**: Save your favorite recipes for quick access
-- **Settings**: Customize your app experience
-
-## Screenshots
-
-[Screenshots to be added]
+- **Modern UI:** Built entirely with Jetpack Compose and Material3 for a responsive, declarative UI.
+- **Recipe Discovery:** Browse, filter, and view detailed recipes with beautiful card-based UI.
+- **Community & Social:** Create posts, share recipes, and interact with a community feed.
+- **User Profile:** View and manage your profile, including a list of your created recipes and stats.
+- **Reusable Components:** Dialogs, stat columns, and other UI elements are implemented as reusable composables.
+- **Adaptive Design:** Responsive layouts and font sizes for phones and tablets.
+- **Extensible Data Layer:** Repository pattern for easy migration from mock data to Room, DataStore, or cloud APIs.
 
 ## Architecture
 
 QuickRecipe is built using:
-- Modern Android development practices with Kotlin
-- Jetpack Compose for the UI
-- MVVM architecture pattern
-- Repository pattern for data management
+- **MVVM architecture pattern** for clear separation of concerns
+- **Repository pattern** for data management and abstraction
+- **Composable UI** with Jetpack Compose
+- **State management** using `mutableStateOf` and state hoisting
+
+**Diagram:**
+```
+[ UI (Compose Screens & Components) ]
+            |
+            v
+[ ViewModel (optional, for state/business logic) ]
+            |
+            v
+[ Repository (UserRepository, PostRepository, MockRecipe) ]
+            |
+            v
+[ Data Source (In-memory, Room, DataStore, API, etc.) ]
+```
+
+## Adaptive Design
+
+- Uses window size awareness and utility functions for responsive padding and font sizes.
+- Layouts adapt to different screen sizes and orientations for a great experience on any device.
+
+## Reusable Components
+
+- **CreatePostDialog:** Centralized dialog for post creation, used across the app.
+- **StatColumn:** Displays user stats, easily reused for any similar data.
+- **RecipeCard, PostItem, FilterChip:** Modular UI elements for consistent, maintainable code.
+
+## Storage
+
+- **In-Memory:** Mock repositories for rapid prototyping.
+- **SharedPreferences:** Used for user session persistence.
+- **Ready for Room/DataStore:** Architecture supports migration to persistent storage for production.
+- **Planned Cloud Integration:** Firebase and cloud storage planned for future enhancements.
+
+## External Interfaces
+
+- **Coil:** Efficient image loading in Compose.
+- **Firebase (planned):** For authentication, storage, and analytics.
+- **Android Platform Services:** SharedPreferences, planned file/image storage.
 
 ## Project Structure
 
@@ -53,6 +89,10 @@ QuickRecipe is built using:
 - Meal planning
 - Shopping list generation from recipes
 - Kitchen inventory management
+
+## Reflection
+
+This project demonstrates modern Android development best practices, including modular architecture, reusable components, and adaptive design. The codebase is clean, maintainable, and ready for future growth and integration with real data sources and cloud services.
 
 ## License
 

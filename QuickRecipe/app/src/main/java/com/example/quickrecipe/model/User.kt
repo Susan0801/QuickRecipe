@@ -11,5 +11,6 @@ data class User(
     val bio: String? = null,
     val followersCount: Int = 0,
     val followingCount: Int = 0,
-    val recipesCreated: Int = 0
+    val recipesCreated: Int = 0,
+    val createdRecipeIds: List<Int> = emptyList()
 )

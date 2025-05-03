@@ -99,7 +99,8 @@ fun CreateRecipeScreen(
                                 )
                                 
                                 // Add the new recipe to MockRecipe
-                                MockRecipe.addRecipe(newRecipe)
+                                val addedRecipe = MockRecipe.addRecipe(newRecipe)
+                                UserRepository.addCreatedRecipe(addedRecipe.id)
                                 
                                 if (createPost) {
                                     val postTitleToUse = if (postTitle.isBlank()) "I made: $title" else postTitle
@@ -375,7 +376,8 @@ fun CreateRecipeScreen(
                         )
                         
                         // Add the new recipe to MockRecipe
-                        MockRecipe.addRecipe(newRecipe)
+                        val addedRecipe = MockRecipe.addRecipe(newRecipe)
+                        UserRepository.addCreatedRecipe(addedRecipe.id)
                         
                         if (createPost) {
                             val postTitleToUse = if (postTitle.isBlank()) "I made: $title" else postTitle
