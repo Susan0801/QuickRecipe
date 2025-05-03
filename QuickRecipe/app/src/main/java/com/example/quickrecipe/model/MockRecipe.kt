@@ -597,15 +597,15 @@ object MockRecipe {
 
     // Get all recipes
     fun getAllRecipes(): List<Recipe> {
-        return mockRecipes
+        return mockRecipes.toList()
     }
     
     // Add a new recipe
     fun addRecipe(recipe: Recipe): Recipe {
-        val newId = mockRecipes.maxOf { it.id } + 1
-        val newRecipe = recipe.copy(id = newId)
-        mockRecipes.add(newRecipe)
-        return newRecipe
+        val newId = (mockRecipes.maxOfOrNull { it.id } ?: 0) + 1
+        val recipeWithId = recipe.copy(id = newId)
+        mockRecipes.add(recipeWithId)
+        return recipeWithId
     }
     
     // Get recipe by ID

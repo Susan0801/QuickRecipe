@@ -47,6 +47,9 @@ fun RecipesScreen(
     var selectedTimeFilter by remember { mutableStateOf<TimeFilter?>(null) }
     var isFiltersVisible by remember { mutableStateOf(false) }
     
+    // Add a state to track recipe changes
+    var recipeUpdateTrigger by remember { mutableStateOf(0) }
+    
     val cuisines = listOf("Mediterranean", "Asian", "Italian", "Mexican", "Indian", "Breakfast")
     val difficulties = listOf(Difficulty.EASY, Difficulty.MEDIUM, Difficulty.HARD)
     val timeFilters = listOf(

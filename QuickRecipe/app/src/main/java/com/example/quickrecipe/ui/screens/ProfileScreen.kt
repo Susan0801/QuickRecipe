@@ -1,5 +1,6 @@
 package com.example.quickrecipe.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -35,6 +36,10 @@ fun ProfileScreen(
     val windowSize = rememberWindowSize()
     val padding = getResponsivePadding(windowSize)
 
+    LaunchedEffect(currentUser) {
+        Log.d("ProfileScreen", "currentUser = $currentUser")
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -48,14 +53,6 @@ fun ProfileScreen(
                     IconButton(onClick = { showLogoutDialog = true }) {
                         Icon(Icons.Default.ExitToApp, contentDescription = "Logout")
                     }
-                }
-            )
-        },
-        bottomBar = {
-            QuickRecipeBottomNavBar(
-                currentIndex = currentNavigationIndex,
-                onTabSelected = { index -> 
-                    onNavigate(index)
                 }
             )
         }

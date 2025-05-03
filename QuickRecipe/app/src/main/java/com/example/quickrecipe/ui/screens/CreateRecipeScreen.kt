@@ -98,6 +98,9 @@ fun CreateRecipeScreen(
                                     imageUrl = null // Could add photo upload later
                                 )
                                 
+                                // Add the new recipe to MockRecipe
+                                MockRecipe.addRecipe(newRecipe)
+                                
                                 if (createPost) {
                                     val postTitleToUse = if (postTitle.isBlank()) "I made: $title" else postTitle
                                     
@@ -370,6 +373,9 @@ fun CreateRecipeScreen(
                             dietaryPrefs = emptyList(), // Could add later
                             imageUrl = null // Could add photo upload later
                         )
+                        
+                        // Add the new recipe to MockRecipe
+                        MockRecipe.addRecipe(newRecipe)
                         
                         if (createPost) {
                             val postTitleToUse = if (postTitle.isBlank()) "I made: $title" else postTitle
